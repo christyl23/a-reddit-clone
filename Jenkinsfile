@@ -49,44 +49,6 @@ pipeline {
                 sh "trivy fs . > trivyfs.txt"
              }
         }
-        stage("Build & Push Docker Image") {
-             steps {
-                 script {
-                     docker.withRegistry('',DOCKER_PASS) {
-                         docker_image = docker.build "${IMAGE_NAME}"
-                     }
-                     docker.withRegistry('',DOCKER_PASS) {
-                         docker_image.push("${IMAGE_TAG}")
-                         docker_image.push('latest')
-                     }
-                 }
-             }
-        }
-        stage("Trivy Image Scan") {
-             steps {
-                 script {
-	              sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image christyl2023/reddit-clone-app:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table > trivyimage.txt')
-                 }
-             }
-        }
-        stage ('Cleanup Artifacts') {
-             steps {
-                 script {
-                      sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG}"
-                      sh "docker rmi ${IMAGE_NAME}:latest"
-                 }
-             }
-        }
+        
     }
-    post {
-        always {
-          emailext attachLog: true,
-             subject: "'${currentBuild.result}'",
-             body: "Project: ${env.JOB_NAME}<br/>" +
-                "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                "URL: ${env.BUILD_URL}<br/>",
-             to: 'christylhcare@gmail.com',                              
-             attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-        }
-    }
-}
+}    
